@@ -173,39 +173,62 @@
     `;
   }
 
+  function saveLessonsOverride() {
+    try {
+      if (window.LESSONS && Array.isArray(window.LESSONS)) {
+        localStorage.setItem('tt_lessons_override', JSON.stringify(window.LESSONS));
+      }
+    } catch(e) {}
+  }
+
   // --- 2. AUDIO YUKLASH TABI ---
   function renderAudioCard(filename, title, typeCode) {
     const uploaded = (typeof window.getUploadedAudios === 'function') ? window.getUploadedAudios() : {};
+    let deletedDefaults = [];
+    try { deletedDefaults = JSON.parse(localStorage.getItem('tt_deleted_defaults') || '[]'); } catch(e){}
+
     let url = null;
     let sourceLabel = '';
     if (uploaded[filename]) {
       url = uploaded[filename];
       sourceLabel = 'Supabase Storage';
-    } else if (selectedDay <= 5) {
+    } else if (selectedDay <= 5 && !deletedDefaults.includes(filename)) {
       url = `assets/audio/${filename}`;
       sourceLabel = 'Lokal fayl';
     }
 
     if (url) {
       return `
-        <div class="card" style="background:#fff;border:1px solid #10b981;border-radius:14px;padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card" style="background:#fff;border:1px solid #10b981;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
             <h4 style="margin:0;font-size:15px">${title} (<code>${filename}</code>)</h4>
             <span class="pill" style="background:#d1fae5;color:#065f46;font-size:11px;font-weight:700">✓ Audio mavjud (${sourceLabel})</span>
           </div>
-          <audio controls style="width:100%;margin-top:6px" src="${url}"></audio>
+          <audio controls style="width:100%" src="${url}"></audio>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+            <button type="button" class="btn-soft" onclick="quickUploadAudio('${filename}', '${typeCode}', ${selectedDay})" style="font-size:12px;padding:6px 12px;color:#087f8c;border:1px solid #087f8c">
+              🔄 Almashtirish (.mp3)
+            </button>
+            <button type="button" class="btn-soft" onclick="handleDeleteAudio('${filename}', ${selectedDay}, '${typeCode}')" style="font-size:12px;padding:6px 12px;color:#bd4040;border:1px solid #bd4040">
+              🗑 O‘chirish
+            </button>
+          </div>
         </div>
       `;
     } else {
       return `
-        <div class="card" style="background:#fcfcfd;border:1px dashed #cbd5e1;border-radius:14px;padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="card" style="background:#fcfcfd;border:1px dashed #cbd5e1;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
             <h4 style="margin:0;font-size:15px;color:#64748b">${title} (<code>${filename}</code>)</h4>
             <span class="pill" style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700">⏳ Hali yuklanmagan</span>
           </div>
-          <div style="padding:10px 12px;background:#fff8ee;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;margin-top:6px;line-height:1.5">
-            ℹ️ Ushbu kun uchun audio hali yuklanmagan.<br>
-            Yuklash uchun: yuqoridagi <b>«Audio turini tanlang»</b> qismidan tanlang, <b>.mp3</b> faylni tanlang va <b>«⬆ Audioni yuklash va saqlash»</b> tugmasini bosing.
+          <div style="padding:10px 12px;background:#fff8ee;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;line-height:1.5">
+            Bu dars/dialog uchun audio fayl yuklanmagan. To‘g‘ridan-to‘g‘ri yuklash uchun bosing:
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button type="button" class="btn-primary" onclick="quickUploadAudio('${filename}', '${typeCode}', ${selectedDay})" style="font-size:13px;padding:7px 16px">
+              ➕ Audio yuklash (.mp3)
+            </button>
           </div>
         </div>
       `;
@@ -318,14 +341,17 @@
 
           <div style="max-height:400px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px">
             <table class="table" style="margin:0;font-size:13px">
-              <thead><tr><th>№</th><th>Türkçe</th><th>O‘zbekcha</th><th></th></tr></thead>
+              <thead><tr><th>№</th><th>Türkçe</th><th>O‘zbekcha</th><th style="text-align:right">Amallar</th></tr></thead>
               <tbody>
                 ${words.map((w, i) => `
                   <tr>
                     <td>${i + 1}</td>
                     <td><strong>${esc(w[1])}</strong></td>
                     <td>${esc(w[2])}</td>
-                    <td><button type="button" class="ghost" onclick="removeWord(${selectedDay}, ${i})" style="color:#bd4040">×</button></td>
+                    <td style="text-align:right;white-space:nowrap">
+                      <button type="button" class="btn-soft" onclick="editWordItem(${selectedDay}, ${i})" title="Tahrirlash" style="font-size:11px;padding:3px 8px;margin-right:4px">✏️</button>
+                      <button type="button" class="btn-soft" onclick="removeWord(${selectedDay}, ${i})" title="O‘chirish" style="color:#bd4040;font-size:11px;padding:3px 8px">🗑</button>
+                    </td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -347,14 +373,17 @@
 
           <div style="max-height:400px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px">
             <table class="table" style="margin:0;font-size:13px">
-              <thead><tr><th>№</th><th>Türkçe</th><th>O‘zbekcha</th><th></th></tr></thead>
+              <thead><tr><th>№</th><th>Türkçe</th><th>O‘zbekcha</th><th style="text-align:right">Amallar</th></tr></thead>
               <tbody>
                 ${phrases.map((p, i) => `
                   <tr>
                     <td>${i + 1}</td>
                     <td><strong>${esc(p[1])}</strong></td>
                     <td>${esc(p[2])}</td>
-                    <td><button type="button" class="ghost" onclick="removePhrase(${selectedDay}, ${i})" style="color:#bd4040">×</button></td>
+                    <td style="text-align:right;white-space:nowrap">
+                      <button type="button" class="btn-soft" onclick="editPhraseItem(${selectedDay}, ${i})" title="Tahrirlash" style="font-size:11px;padding:3px 8px;margin-right:4px">✏️</button>
+                      <button type="button" class="btn-soft" onclick="removePhrase(${selectedDay}, ${i})" title="O‘chirish" style="color:#bd4040;font-size:11px;padding:3px 8px">🗑</button>
+                    </td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -385,14 +414,17 @@
 
       <div class="dialogs-editor-list" style="display:grid;gap:16px">
         ${dialogs.map((d, idx) => `
-          <div class="card" style="border:1px solid #cbd5e1;background:#fff">
-            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:12px">
-              <h3 style="margin:0">0${idx + 1}. ${esc(d.title)}</h3>
+          <div class="card" style="border:1px solid #cbd5e1;background:#fff;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+              <div style="flex:1;min-width:240px">
+                <label style="font-size:12px;font-weight:bold;color:#64748b;display:block;margin-bottom:4px">Dialog mavzusi / sarlavhasi:</label>
+                <input id="dialog-title-${idx}" value="${esc(d.title)}" style="width:100%;font-weight:bold;font-size:15px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px">
+              </div>
               <span class="pill">Dialog ${idx + 1}</span>
             </div>
 
             <label><strong>Replikalar (Har bir qator alohida gap):</strong></label>
-            <textarea id="dialog-lines-${idx}" rows="6" style="width:100%;font-family:inherit;margin-top:6px;padding:8px">${esc((d.lines || []).join('\n'))}</textarea>
+            <textarea id="dialog-lines-${idx}" rows="6" style="width:100%;font-family:inherit;margin-top:6px;padding:8px;border:1px solid #cbd5e1;border-radius:6px">${esc((d.lines || []).join('\n'))}</textarea>
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:10px">
               <div style="display:flex;align-items:center;gap:8px">
@@ -478,9 +510,10 @@
             <h3 style="margin:10px 0 6px">${esc(b.title)}</h3>
             <p class="muted" style="font-size:13px;margin:0 0 10px">${esc(b.desc || 'Amaliy qo‘llanma')}</p>
             <p style="font-size:12px;color:#087f8c;word-break:break-all">📁 Fayl: ${esc(b.file)}</p>
-            <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #e2e8f0">
-              <a href="assets/books/${encodeURIComponent(b.file)}" target="_blank" class="btn-soft" style="font-size:12px;flex:1;text-align:center">Ko‘rish ↗</a>
-              <button class="btn-soft" onclick="deleteBookItem(${idx})" style="color:#bd4040;font-size:12px">O‘chirish</button>
+            <div style="display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #e2e8f0;flex-wrap:wrap">
+              <a href="${b.file.startsWith('http') ? esc(b.file) : 'assets/books/' + encodeURIComponent(b.file)}" target="_blank" class="btn-soft" style="font-size:12px;flex:1;text-align:center">Ko‘rish ↗</a>
+              <button class="btn-soft" onclick="editBookItem(${idx})" style="font-size:12px;padding:4px 10px">✏️ Tahrirlash</button>
+              <button class="btn-soft" onclick="deleteBookItem(${idx})" style="color:#bd4040;font-size:12px;padding:4px 10px">🗑 O‘chirish</button>
             </div>
           </div>
         `).join('')}
@@ -564,13 +597,71 @@
     renderAdminStudio();
   };
 
-  // Dialog saqlash
+  // Tezkor audio yuklash va almashtirish (Kartaning o'zidan to'g'ridan-to'g'ri)
+  window.quickUploadAudio = function(filename, type, day) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/mp3,audio/*';
+    input.onchange = async () => {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const formData = new FormData();
+      formData.append('audio', file);
+      formData.append('day', day);
+      formData.append('type', type);
+      formData.append('customName', filename.replace(/\.mp3$/, ''));
+
+      const statusEl = document.querySelector('#upload-status');
+      if (statusEl) {
+        statusEl.textContent = 'Yuklanmoqda... ⏳';
+        statusEl.style.color = '#3b82f6';
+      }
+
+      try {
+        if (window.API && typeof API.uploadAudio === 'function') {
+          const res = await API.uploadAudio(formData);
+          if (res && res.ok) {
+            alert(`✅ "${filename}" fayli muvaffaqiyatli saqlandi!`);
+            renderAdminStudio();
+          } else {
+            alert('Xatolik: ' + (res?.error || 'Yuklab bo‘lmadi'));
+          }
+        }
+      } catch (e) {
+        alert('Xatolik: ' + e.message);
+      }
+    };
+    input.click();
+  };
+
+  // Audio o'chirish (Storage + Database + Local)
+  window.handleDeleteAudio = async function(filename, day, type) {
+    if (!confirm(`Haqiqatan ham "${filename}" audio faylini o‘chirmoqchimisiz?`)) return;
+    try {
+      if (window.API && typeof API.deleteAudio === 'function') {
+        await API.deleteAudio(filename, day, type);
+      } else {
+        if (typeof window.removeUploadedAudio === 'function') {
+          window.removeUploadedAudio(filename);
+        }
+      }
+      alert(`"${filename}" audiosi muvaffaqiyatli o‘chirildi! ✓`);
+      renderAdminStudio();
+    } catch(e) {
+      alert('O‘chirishda xatolik: ' + e.message);
+    }
+  };
+
+  // Dialog saqlash (Sarlavha va replikalarni to'liq saqlash)
   window.saveDialogChanges = async function(day, idx) {
+    const title = document.querySelector(`#dialog-title-${idx}`)?.value?.trim() || '';
     const linesText = document.querySelector(`#dialog-lines-${idx}`)?.value || '';
     const lines = linesText.split('\n').map(l => l.trim()).filter(Boolean);
     const lesson = (window.LESSONS || [])[day - 1];
     if (lesson && lesson.dialogs && lesson.dialogs[idx]) {
+      if (title) lesson.dialogs[idx].title = title;
       lesson.dialogs[idx].lines = lines;
+      saveLessonsOverride();
       if (window.API && typeof API.saveDialog === 'function') {
         await API.saveDialog({
           day,
@@ -580,31 +671,48 @@
           audio_url: `${day}.3.${idx + 1}.mp3`
         });
       }
-      alert('Dialog o‘zgarishlari saqlandi! ✓');
+      alert('Dialog muvaffaqiyatli saqlandi! ✓');
+      renderAdminStudio();
     }
   };
 
   // Dialog o'chirish
-  window.deleteDialogItem = function(day, idx) {
+  window.deleteDialogItem = async function(day, idx) {
     if (!confirm('Haqiqatan ham bu dialogni o‘chirmoqchimisiz?')) return;
     const lesson = (window.LESSONS || [])[day - 1];
     if (lesson && lesson.dialogs) {
       lesson.dialogs.splice(idx, 1);
+      saveLessonsOverride();
+      if (window.API && typeof API.deleteDialog === 'function') {
+        await API.deleteDialog(day, idx + 1);
+      }
       renderAdminStudio();
     }
   };
 
   // Yangi dialog qo'shish modal
-  window.openAddDialogModal = function(day) {
+  window.openAddDialogModal = async function(day) {
     const title = prompt('Yangi dialog mavzusi (sarlavhasi)ni kiriting:');
     if (!title) return;
     const lesson = (window.LESSONS || [])[day - 1];
     if (lesson) {
       lesson.dialogs = lesson.dialogs || [];
-      lesson.dialogs.push({
+      const newIdx = lesson.dialogs.length + 1;
+      const newD = {
         title,
         lines: ['Personel: Merhaba, nasıl yardımcı olabilirim?', 'Misafir: Merhaba...']
-      });
+      };
+      lesson.dialogs.push(newD);
+      saveLessonsOverride();
+      if (window.API && typeof API.saveDialog === 'function') {
+        await API.saveDialog({
+          day,
+          order_num: newIdx,
+          title,
+          lines: newD.lines,
+          audio_url: `${day}.3.${newIdx}.mp3`
+        });
+      }
       renderAdminStudio();
     }
   };
@@ -620,6 +728,7 @@
       lesson.words = lesson.words || [];
       const num = lesson.words.length + 1;
       lesson.words.push([String(num), tr, uz]);
+      saveLessonsOverride();
       if (window.API && typeof API.saveWord === 'function') {
         await API.saveWord({ day, order_num: num, turkish: tr, uzbek: uz });
       }
@@ -627,10 +736,35 @@
     }
   };
 
-  window.removeWord = function(day, idx) {
+  // So'z tahrirlash (Türkçe va O'zbekcha)
+  window.editWordItem = async function(day, idx) {
+    const lesson = (window.LESSONS || [])[day - 1];
+    if (!lesson || !lesson.words || !lesson.words[idx]) return;
+    const w = lesson.words[idx];
+    const newTr = prompt('Türkçe so‘z:', w[1]);
+    if (newTr === null) return;
+    const newUz = prompt('O‘zbekcha tarjimasi:', w[2]);
+    if (newUz === null) return;
+    w[1] = newTr.trim();
+    w[2] = newUz.trim();
+    saveLessonsOverride();
+    if (window.API && typeof API.saveWord === 'function') {
+      await API.saveWord({ day, order_num: idx + 1, turkish: w[1], uzbek: w[2] });
+    }
+    renderAdminStudio();
+  };
+
+  // So'z o'chirish
+  window.removeWord = async function(day, idx) {
+    if (!confirm('Ushbu so‘zni o‘chirmoqchimisiz?')) return;
     const lesson = (window.LESSONS || [])[day - 1];
     if (lesson && lesson.words) {
       lesson.words.splice(idx, 1);
+      lesson.words.forEach((w, i) => { w[0] = String(i + 1); });
+      saveLessonsOverride();
+      if (window.API && typeof API.deleteWord === 'function') {
+        await API.deleteWord(day, idx + 1);
+      }
       renderAdminStudio();
     }
   };
@@ -646,6 +780,7 @@
       lesson.phrases = lesson.phrases || [];
       const num = lesson.phrases.length + 1;
       lesson.phrases.push([String(num), tr, uz]);
+      saveLessonsOverride();
       if (window.API && typeof API.savePhrase === 'function') {
         await API.savePhrase({ day, order_num: num, turkish: tr, uzbek: uz });
       }
@@ -653,10 +788,35 @@
     }
   };
 
-  window.removePhrase = function(day, idx) {
+  // Ibora tahrirlash (Türkçe va O'zbekcha)
+  window.editPhraseItem = async function(day, idx) {
+    const lesson = (window.LESSONS || [])[day - 1];
+    if (!lesson || !lesson.phrases || !lesson.phrases[idx]) return;
+    const p = lesson.phrases[idx];
+    const newTr = prompt('Türkçe ibora:', p[1]);
+    if (newTr === null) return;
+    const newUz = prompt('O‘zbekcha tarjimasi:', p[2]);
+    if (newUz === null) return;
+    p[1] = newTr.trim();
+    p[2] = newUz.trim();
+    saveLessonsOverride();
+    if (window.API && typeof API.savePhrase === 'function') {
+      await API.savePhrase({ day, order_num: idx + 1, turkish: p[1], uzbek: p[2] });
+    }
+    renderAdminStudio();
+  };
+
+  // Ibora o'chirish
+  window.removePhrase = async function(day, idx) {
+    if (!confirm('Ushbu iborani o‘chirmoqchimisiz?')) return;
     const lesson = (window.LESSONS || [])[day - 1];
     if (lesson && lesson.phrases) {
       lesson.phrases.splice(idx, 1);
+      lesson.phrases.forEach((p, i) => { p[0] = String(i + 1); });
+      saveLessonsOverride();
+      if (window.API && typeof API.deletePhrase === 'function') {
+        await API.deletePhrase(day, idx + 1);
+      }
       renderAdminStudio();
     }
   };
@@ -676,6 +836,7 @@
       lesson.subtitle = subtitle;
       lesson.video = video_url;
       lesson.grammar = grammar;
+      saveLessonsOverride();
 
       if (window.API && typeof API.saveLesson === 'function') {
         await Promise.all([
@@ -711,6 +872,38 @@
     books.push({ title, desc, file });
     try { localStorage.setItem('tt_books_override', JSON.stringify(books)); } catch(e){}
     alert(`"${title}" kitobi qo‘shildi!`);
+    renderAdminStudio();
+  };
+
+  // Kitobni tahrirlash
+  window.editBookItem = function(idx) {
+    let books = [];
+    try {
+      books = JSON.parse(localStorage.getItem('tt_books_override') || 'null');
+    } catch(e){}
+    if (!Array.isArray(books) || !books.length) {
+      books = [
+        { file: 'TURK TILI TURIZMDA.pdf', title: 'Turk tili turizmda', desc: 'Kasbiy turk tili' },
+        { file: 'Turk tili.pdf', title: 'Turk tili', desc: 'Umumiy til ko‘nikmalari' },
+        { file: 'Yabanci_Dilim_Turkce_1 (1).pdf', title: 'Yabancı Dilim Türkçe 1', desc: 'Boshlang‘ich daraja' },
+        { file: 'yabancilar_icin_turkce_dilbilgisi_A1_A2_kurallar_ve_alistirmalar.pdf', title: 'Türkçe Dilbilgisi A1–A2', desc: 'Grammatika va mashqlar' }
+      ];
+    }
+    const b = books[idx];
+    if (!b) return;
+    const newTitle = prompt('Kitob sarlavhasi:', b.title);
+    if (newTitle === null) return;
+    const newDesc = prompt('Kitob tavsifi:', b.desc || '');
+    if (newDesc === null) return;
+    const newFile = prompt('Fayl nomi yoki internetdagi PDF havola:', b.file);
+    if (newFile === null) return;
+
+    b.title = newTitle.trim() || b.title;
+    b.desc = newDesc.trim();
+    b.file = newFile.trim() || b.file;
+
+    try { localStorage.setItem('tt_books_override', JSON.stringify(books)); } catch(e){}
+    alert('Kitob ma’lumotlari muvaffaqiyatli yangilandi! ✓');
     renderAdminStudio();
   };
 

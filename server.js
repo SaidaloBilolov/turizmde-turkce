@@ -486,6 +486,39 @@ app.post('/api/admin/upload-audio', upload.single('audio'), async (req, res) => 
   }
 });
 
+// 5.1 AUDIO O'CHIRISH (Supabase Storage va ma'lumotlar bazasidan)
+app.post('/api/admin/delete-audio', async (req, res) => {
+  try {
+    const { filename, day, type } = req.body;
+    if (!filename) return res.status(400).json({ error: 'Fayl nomi ko‘rsatilmadi' });
+
+    if (supabase) {
+      await supabase.storage.from('audio').remove([filename]);
+      if (day) {
+        const d = parseInt(day);
+        if (type === 'word') {
+          await supabase.from('words').update({ audio_url: '' }).eq('day', d);
+        } else if (type === 'phrase') {
+          await supabase.from('phrases').update({ audio_url: '' }).eq('day', d);
+        } else if (type && type.startsWith('dialog_')) {
+          const idx = parseInt(type.replace('dialog_', ''));
+          await supabase.from('dialogs').update({ audio_url: '' }).eq('day', d).eq('order_num', idx);
+        }
+      }
+    }
+
+    // Local file fallback
+    const localPath = path.join(__dirname, 'assets/audio', filename);
+    if (fs.existsSync(localPath)) {
+      try { fs.unlinkSync(localPath); } catch(e){}
+    }
+
+    res.json({ ok: true, message: 'Audio o‘chirildi' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 6. Darsni yaratish yoki tahrirlash (Lesson Save)
 app.post('/api/admin/lessons', async (req, res) => {
   try {

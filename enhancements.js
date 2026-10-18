@@ -17,6 +17,12 @@
     'ŞİKÂYET, SORUN VE ACİL DURUMLARDA TÜRKÇE',
     'TURİZMDE TELEFON, WHATSAPP VE YAZILI İLETİŞİM'
   ];
+  try {
+    const savedLessons = JSON.parse(localStorage.getItem('tt_lessons_override') || 'null');
+    if (Array.isArray(savedLessons) && savedLessons.length) {
+      window.LESSONS = savedLessons;
+    }
+  } catch(e) {}
   if (window.LESSONS) window.LESSONS.forEach((l,i)=>{ l.title=dayTitles[i] || l.title; });
   const baseAccounts = () => { try { return JSON.parse(localStorage.getItem('tt_accounts_override')||'null') || (window.DEMO_ACCOUNTS||[]).map(a=>({id:a[0],pw:a[1]})); } catch(e) { return (window.DEMO_ACCOUNTS||[]).map(a=>({id:a[0],pw:a[1]})); } };
   const storeAccounts = a => { try { localStorage.setItem('tt_accounts_override',JSON.stringify(a)); return true; } catch(e) { alert('Akkauntlar ro‘yxatini saqlab bo‘lmadi. Brauzer xotirasini tekshiring.'); return false; } };
@@ -30,7 +36,9 @@
   window.audio = function(name, i) {
     const filename = `${name}.mp3`;
     const uploaded = (typeof window.getUploadedAudios === 'function') ? window.getUploadedAudios() : {};
-    const audioSrc = uploaded[filename] || (day <= 5 ? `assets/audio/${filename}` : null);
+    let deletedDefaults = [];
+    try { deletedDefaults = JSON.parse(localStorage.getItem('tt_deleted_defaults') || '[]'); } catch(e){}
+    const audioSrc = uploaded[filename] || (day <= 5 && !deletedDefaults.includes(filename) ? `assets/audio/${filename}` : null);
     const exists = !!audioSrc;
     return `<div class="card"><strong>🎧 ${esc2(name)}.mp3</strong>${exists ? `<audio class="audio" controls preload="metadata" data-index="${i}" src="${audioSrc}"></audio><span class="small muted" id="heard${i}">${get().heard?.[`${day}-${step}-${i}`] ? '✓ Tinglangan' : 'Oxirigacha tinglang'}</span>` : `<p class="notice">Bu dars uchun audio fayl hozircha yuklanmagan. Matnni o‘rganib, quyidagi tugma orqali bosqichni yakunlashingiz mumkin.</p>`}</div>`;
   };

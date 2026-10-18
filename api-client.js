@@ -34,6 +34,22 @@ window.API = (function() {
       const map = window.getUploadedAudios();
       map[filename] = url;
       localStorage.setItem('tt_uploaded_audios', JSON.stringify(map));
+      const del = JSON.parse(localStorage.getItem('tt_deleted_defaults') || '[]');
+      const nextDel = del.filter(f => f !== filename);
+      localStorage.setItem('tt_deleted_defaults', JSON.stringify(nextDel));
+    } catch (e) {}
+  };
+
+  window.removeUploadedAudio = function(filename) {
+    try {
+      const map = window.getUploadedAudios();
+      delete map[filename];
+      localStorage.setItem('tt_uploaded_audios', JSON.stringify(map));
+      const del = JSON.parse(localStorage.getItem('tt_deleted_defaults') || '[]');
+      if (!del.includes(filename)) {
+        del.push(filename);
+        localStorage.setItem('tt_deleted_defaults', JSON.stringify(del));
+      }
     } catch (e) {}
   };
 
@@ -41,16 +57,24 @@ window.API = (function() {
     const client = getSupabase();
     if (!client) return;
     try {
-      const { data: files } = await client.storage.from('audio').list('', { limit: 100 });
+      const { data: files } = await client.storage.from('audio').list('', { limit: 200 });
       if (Array.isArray(files)) {
+        const fileNames = new Set(files.map(f => f.name));
+        const map = window.getUploadedAudios();
+        Object.keys(map).forEach(k => {
+          if (map[k] && map[k].includes('supabase.co') && !fileNames.has(k)) {
+            delete map[k];
+          }
+        });
         files.forEach(f => {
           if (f.name && f.name.endsWith('.mp3')) {
             const { data: urlData } = client.storage.from('audio').getPublicUrl(f.name);
             if (urlData && urlData.publicUrl) {
-              window.setUploadedAudio(f.name, urlData.publicUrl);
+              map[f.name] = urlData.publicUrl;
             }
           }
         });
+        localStorage.setItem('tt_uploaded_audios', JSON.stringify(map));
       }
     } catch (e) {}
   }
@@ -204,6 +228,46 @@ window.API = (function() {
     }
   }
 
+  // Audio o'chirish (Supabase Storage + Database)
+  async function deleteAudio(filename, day, type) {
+    if (!filename) return { ok: false, error: 'Fayl nomi ko‘rsatilmadi' };
+    if (!filename.endsWith('.mp3')) filename += '.mp3';
+
+    const client = getSupabase();
+    if (client) {
+      try {
+        await client.storage.from('audio').remove([filename]);
+        if (day) {
+          const d = parseInt(day);
+          if (type === 'word') {
+            await client.from('words').update({ audio_url: '' }).eq('day', d);
+          } else if (type === 'phrase') {
+            await client.from('phrases').update({ audio_url: '' }).eq('day', d);
+          } else if (type && type.startsWith('dialog_')) {
+            const idx = parseInt(type.replace('dialog_', ''));
+            await client.from('dialogs').update({ audio_url: '' }).eq('day', d).eq('order_num', idx);
+          }
+        }
+      } catch (e) {
+        console.warn('Supabase deleteAudio error:', e);
+      }
+    }
+
+    if (typeof window.removeUploadedAudio === 'function') {
+      window.removeUploadedAudio(filename);
+    }
+
+    try {
+      fetch(`${BASE_URL}/api/admin/delete-audio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, day, type })
+      }).catch(() => {});
+    } catch(e) {}
+
+    return { ok: true, message: 'Audio muvaffaqiyatli o‘chirildi!' };
+  }
+
   // So'z saqlash (Supabase database)
   async function saveWord(data) {
     const client = getSupabase();
@@ -222,13 +286,24 @@ window.API = (function() {
     return { ok: true, local: true };
   }
 
+  // So'z o'chirish
+  async function deleteWord(day, order_num) {
+    const client = getSupabase();
+    if (client) {
+      try {
+        await client.from('words').delete().eq('day', parseInt(day)).eq('order_num', parseInt(order_num));
+      } catch (e) {}
+    }
+    return { ok: true };
+  }
+
   // Ibora saqlash (Supabase database)
   async function savePhrase(data) {
     const client = getSupabase();
     if (client) {
       try {
         const { error } = await client.from('phrases').upsert({
-          day: parseInt(data.day),
+          day: parseInt(day),
           order_num: parseInt(data.order_num),
           turkish: data.turkish,
           uzbek: data.uzbek,
@@ -238,6 +313,17 @@ window.API = (function() {
       } catch (e) {}
     }
     return { ok: true, local: true };
+  }
+
+  // Ibora o'chirish
+  async function deletePhrase(day, order_num) {
+    const client = getSupabase();
+    if (client) {
+      try {
+        await client.from('phrases').delete().eq('day', parseInt(day)).eq('order_num', parseInt(order_num));
+      } catch (e) {}
+    }
+    return { ok: true };
   }
 
   // Dialog saqlash (Supabase database)
@@ -256,6 +342,17 @@ window.API = (function() {
       } catch (e) {}
     }
     return { ok: true, local: true };
+  }
+
+  // Dialog o'chirish
+  async function deleteDialog(day, order_num) {
+    const client = getSupabase();
+    if (client) {
+      try {
+        await client.from('dialogs').delete().eq('day', parseInt(day)).eq('order_num', parseInt(order_num));
+      } catch (e) {}
+    }
+    return { ok: true };
   }
 
   // Dars parametrlarini saqlash (Supabase database)
@@ -370,9 +467,13 @@ window.API = (function() {
     checkStatus,
     login,
     uploadAudio,
+    deleteAudio,
     saveWord,
+    deleteWord,
     savePhrase,
+    deletePhrase,
     saveDialog,
+    deleteDialog,
     saveLesson,
     saveGrammar,
     addStudent,
