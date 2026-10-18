@@ -48,7 +48,7 @@
   window.render = function(){
     if(!user && !['landing','login','about','contact'].includes(view)) view='landing';
     switch(view){
-      case 'landing': landing(); break;
+      case 'landing': (window.landing || landing)(); break;
       case 'login': login(); break;
       case 'about': about(); break;
       case 'contact': contact(); break;
@@ -62,7 +62,7 @@
       case 'help': help(); break;
       case 'certificate': certificate(); break;
       case 'admin': admin(); break;
-      default: if(adminMode()) admin(); else landing();
+      default: if(adminMode()) admin(); else (window.landing || landing)();
     }
   };
 

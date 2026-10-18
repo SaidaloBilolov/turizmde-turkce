@@ -26,15 +26,14 @@ html{scroll-behavior:smooth}body{font-family:Inter,"Segoe UI",Arial,sans-serif;b
 
 .manual-complete{margin-top:18px;padding:15px;background:#fff8e9;border:1px solid #f0dfb8;border-radius:14px}
 
-/* V9 requested finishing touches */
-body, body p, body span, body small, body label, body li, body a, body button,
-body input, body select, body textarea, body summary, body td, body th,
-body .muted, body .eyebrow, body .pill, body .notice {
-  font-weight: 650 !important;
+/* Clean modern typography */
+body {
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', -apple-system, sans-serif;
+  font-weight: 450;
 }
 body h1, body h2, body h3, body h4, body strong, body b, body .btn-primary,
 body .side button, body .lesson-tab, body .day-card h3 {
-  font-weight: 800 !important;
+  font-weight: 700;
 }
 .dialog-audio-top { margin: 0 0 14px; }
 .dialog-audio-top .card { margin: 0; padding: 12px 15px; border: 1px solid #dce8ee; background: #f7fbfc; }
@@ -43,6 +42,3 @@ body .side button, body .lesson-tab, body .day-card h3 {
 .grammar-card summary .grammar-number { display: none !important; }
 .admin-results-list { display: grid; gap: 10px; }
 .admin-result-row[hidden] { display: none !important; }
-body * { font-weight: 650 !important; }
-body h1, body h2, body h3, body h4, body strong, body b, body .btn-primary,
-body .side button, body .lesson-tab, body .day-card h3 { font-weight: 800 !important; }
