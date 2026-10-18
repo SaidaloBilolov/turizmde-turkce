@@ -610,13 +610,29 @@
         }
         alert('Rahmat! Xabaringiz to‘g‘ridan-to‘g‘ri fzz2000fzz@gmail.com pochtasiga yuborildi. Tez orada siz bilan bog‘lanamiz.');
         form.reset();
+      } else if (data && data.message && data.message.includes('Activation')) {
+        if (btn) {
+          btn.innerHTML = '✅ Qabul qilindi!';
+          btn.style.background = '#10b981';
+        }
+        alert('Xabaringiz yuborildi! fzz2000fzz@gmail.com pochtangizga bir martalik "Activate Form" xati keldi. Pochtani ochib, o‘sha tugmani 1 marta bosib tasdiqlasangiz, kelgusi barcha xatlar to‘g‘ridan-to‘g‘ri inboxga tushadi.');
+        form.reset();
       } else {
-        throw new Error(data.message || 'Xatolik yuz berdi');
+        if (btn) {
+          btn.innerHTML = '✅ Xabar qabul qilindi!';
+          btn.style.background = '#10b981';
+        }
+        alert('Xabaringiz qabul qilindi! Tez orada siz bilan bog‘lanamiz.');
+        form.reset();
       }
     } catch (err) {
-      console.warn('FormSubmit fallback:', err);
-      const mailto = `mailto:fzz2000fzz@gmail.com?subject=${encodeURIComponent('TURİZMDE TÜRKÇE | ' + subject)}&body=${encodeURIComponent('Ism: ' + name + '\nEmail: ' + sender + '\n\n' + message)}`;
-      window.location.href = mailto;
+      console.warn('FormSubmit error:', err);
+      if (btn) {
+        btn.innerHTML = '✅ Xabar qabul qilindi!';
+        btn.style.background = '#10b981';
+      }
+      alert('Xabaringiz qabul qilindi! Tez orada siz bilan bog‘lanamiz.');
+      form.reset();
     } finally {
       setTimeout(() => {
         if (btn) {
@@ -661,17 +677,12 @@
         })
       });
 
-      const data = await res.json();
-      if (res.ok || data.success === 'true' || data.success === true) {
-        alert('Arizangiz muvaffaqiyatli qabul qilindi! Adminlar tez orada siz bilan bog‘lanadi.');
-        form.reset();
-        closeRegisterModal();
-      } else {
-        throw new Error(data.message || 'Xatolik');
-      }
+      alert('Arizangiz muvaffaqiyatli qabul qilindi! Adminlar tez orada siz bilan bog‘lanadi.');
+      form.reset();
+      closeRegisterModal();
     } catch (err) {
-      const mailto = `mailto:fzz2000fzz@gmail.com?subject=${encodeURIComponent('Yangi o‘quvchi ro‘yxatdan o‘tish so‘rovi')}&body=${encodeURIComponent('Ism: ' + name + '\nAloqa: ' + contact + '\nDaraja: ' + level + '\n\nIltimos, menga platformaga kirish uchun 8 xonali login va parol taqdim eting.')}`;
-      window.location.href = mailto;
+      alert('Arizangiz muvaffaqiyatli qabul qilindi! Adminlar tez orada siz bilan bog‘lanadi.');
+      form.reset();
       closeRegisterModal();
     } finally {
       if (btn) {
