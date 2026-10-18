@@ -21,6 +21,40 @@ window.API = (function() {
     return sb;
   }
 
+  window.getUploadedAudios = function() {
+    try {
+      return JSON.parse(localStorage.getItem('tt_uploaded_audios') || '{}');
+    } catch (e) {
+      return {};
+    }
+  };
+
+  window.setUploadedAudio = function(filename, url) {
+    try {
+      const map = window.getUploadedAudios();
+      map[filename] = url;
+      localStorage.setItem('tt_uploaded_audios', JSON.stringify(map));
+    } catch (e) {}
+  };
+
+  async function syncAudiosFromStorage() {
+    const client = getSupabase();
+    if (!client) return;
+    try {
+      const { data: files } = await client.storage.from('audio').list('', { limit: 100 });
+      if (Array.isArray(files)) {
+        files.forEach(f => {
+          if (f.name && f.name.endsWith('.mp3')) {
+            const { data: urlData } = client.storage.from('audio').getPublicUrl(f.name);
+            if (urlData && urlData.publicUrl) {
+              window.setUploadedAudio(f.name, urlData.publicUrl);
+            }
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
   // Tizim holatini tekshirish
   async function checkStatus() {
     const client = getSupabase();
@@ -28,6 +62,7 @@ window.API = (function() {
       try {
         const { count, error } = await client.from('lessons').select('*', { count: 'exact', head: true });
         if (!error) {
+          syncAudiosFromStorage();
           return {
             ok: true,
             supabase: true,
@@ -140,6 +175,10 @@ window.API = (function() {
           }
         } catch (dbErr) {
           console.warn('DB audio_url yangilash ogohlantirishi:', dbErr);
+        }
+
+        if (typeof window.setUploadedAudio === 'function') {
+          window.setUploadedAudio(filename, audioUrl);
         }
 
         return {

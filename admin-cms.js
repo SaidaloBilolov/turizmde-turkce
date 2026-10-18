@@ -174,8 +174,53 @@
   }
 
   // --- 2. AUDIO YUKLASH TABI ---
+  function renderAudioCard(filename, title, typeCode) {
+    const uploaded = (typeof window.getUploadedAudios === 'function') ? window.getUploadedAudios() : {};
+    let url = null;
+    let sourceLabel = '';
+    if (uploaded[filename]) {
+      url = uploaded[filename];
+      sourceLabel = 'Supabase Storage';
+    } else if (selectedDay <= 5) {
+      url = `assets/audio/${filename}`;
+      sourceLabel = 'Lokal fayl';
+    }
+
+    if (url) {
+      return `
+        <div class="card" style="background:#fff;border:1px solid #10b981;border-radius:14px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h4 style="margin:0;font-size:15px">${title} (<code>${filename}</code>)</h4>
+            <span class="pill" style="background:#d1fae5;color:#065f46;font-size:11px;font-weight:700">✓ Audio mavjud (${sourceLabel})</span>
+          </div>
+          <audio controls style="width:100%;margin-top:6px" src="${url}"></audio>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="card" style="background:#fcfcfd;border:1px dashed #cbd5e1;border-radius:14px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h4 style="margin:0;font-size:15px;color:#64748b">${title} (<code>${filename}</code>)</h4>
+            <span class="pill" style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700">⏳ Hali yuklanmagan</span>
+          </div>
+          <div style="padding:10px 12px;background:#fff8ee;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;margin-top:6px;line-height:1.5">
+            ℹ️ Ushbu kun uchun audio hali yuklanmagan.<br>
+            Yuklash uchun: yuqoridagi <b>«Audio turini tanlang»</b> qismidan tanlang, <b>.mp3</b> faylni tanlang va <b>«⬆ Audioni yuklash va saqlash»</b> tugmasini bosing.
+          </div>
+        </div>
+      `;
+    }
+  }
+
   function renderAudioTab() {
     const lessonDays = Array.from({ length: 15 }, (_, i) => i + 1);
+
+    const slotWords = renderAudioCard(`${selectedDay}.1.1.mp3`, '📖 So‘zlar audiosi', 'word');
+    const slotPhrases = renderAudioCard(`${selectedDay}.2.1.mp3`, '💬 Iboralar audiosi', 'phrase');
+    const slotDialog1 = renderAudioCard(`${selectedDay}.3.1.mp3`, '🗣 1-Dialog audiosi', 'dialog_1');
+    const slotDialog2 = renderAudioCard(`${selectedDay}.3.2.mp3`, '🗣 2-Dialog audiosi', 'dialog_2');
+    const slotDialog3 = renderAudioCard(`${selectedDay}.3.3.mp3`, '🗣 3-Dialog audiosi', 'dialog_3');
+    const slotDialog4 = renderAudioCard(`${selectedDay}.3.4.mp3`, '🗣 4-Dialog audiosi', 'dialog_4');
 
     return `
       <div class="card" style="margin-bottom:20px;background:#f8fafc;border:1px solid #cbd5e1">
@@ -229,20 +274,12 @@
         <p class="muted">Ushbu kundagi mavjud audiolarni eshitib tekshirishingiz mumkin:</p>
         
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:14px">
-          <div class="card" style="background:#fff">
-            <h4>📖 So‘zlar audiosi (${selectedDay}.1.1.mp3)</h4>
-            <audio controls style="width:100%;margin-top:8px" src="assets/audio/${selectedDay}.1.1.mp3" onerror="this.outerHTML='<p class=\'notice\'>Audio fayl hali yuklanmagan</p>'"></audio>
-          </div>
-          <div class="card" style="background:#fff">
-            <h4>💬 Iboralar audiosi (${selectedDay}.2.1.mp3)</h4>
-            <audio controls style="width:100%;margin-top:8px" src="assets/audio/${selectedDay}.2.1.mp3" onerror="this.outerHTML='<p class=\'notice\'>Audio fayl hali yuklanmagan</p>'"></audio>
-          </div>
-          ${[1, 2, 3, 4].map(idx => `
-            <div class="card" style="background:#fff">
-              <h4>🗣 ${idx}-Dialog audiosi (${selectedDay}.3.${idx}.mp3)</h4>
-              <audio controls style="width:100%;margin-top:8px" src="assets/audio/${selectedDay}.3.${idx}.mp3" onerror="this.outerHTML='<p class=\'notice\'>Audio fayl hali yuklanmagan</p>'"></audio>
-            </div>
-          `).join('')}
+          ${slotWords}
+          ${slotPhrases}
+          ${slotDialog1}
+          ${slotDialog2}
+          ${slotDialog3}
+          ${slotDialog4}
         </div>
       </div>
     `;

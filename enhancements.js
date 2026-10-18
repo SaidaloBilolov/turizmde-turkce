@@ -27,6 +27,13 @@
   const renderTable = (rows,kind) => `<div class="study-tools"><input class="study-search" id="study-search" placeholder="🔎 ${kind==='word'?'So‘z qidirish…':'Iborani qidirish…'}" oninput="filterStudyCards()"><span class="study-count">${rows.length} ta ${kind==='word'?'so‘z':'ibora'}</span><button type="button" class="btn-soft" onclick="toggleTranslations()">Tarjimalarni ko‘rsatish / yashirish</button></div><div class="study-grid" id="study-grid">${rows.map((r,i)=>`<button type="button" class="study-card ${kind==='word'?'word-card':'phrase-card'}" data-search="${esc2((r[1]+' '+r[2]).toLowerCase())}" onclick="this.classList.toggle('revealed')"><span class="study-number">${fmtDay(i+1)}</span><span class="study-turkish">${esc2(r[1])}</span><span class="study-translation">${esc2(r[2])}</span><span class="study-hint">Tarjimani ko‘rish ↗</span></button>`).join('')}</div>`;
   window.filterStudyCards = function(){const q=(document.querySelector('#study-search')?.value||'').toLowerCase();document.querySelectorAll('#study-grid .study-card').forEach(c=>c.hidden=!c.dataset.search.includes(q));};
   window.toggleTranslations = function(){document.querySelectorAll('#study-grid .study-card').forEach(c=>c.classList.toggle('revealed'));};
+  window.audio = function(name, i) {
+    const filename = `${name}.mp3`;
+    const uploaded = (typeof window.getUploadedAudios === 'function') ? window.getUploadedAudios() : {};
+    const audioSrc = uploaded[filename] || (day <= 5 ? `assets/audio/${filename}` : null);
+    const exists = !!audioSrc;
+    return `<div class="card"><strong>🎧 ${esc2(name)}.mp3</strong>${exists ? `<audio class="audio" controls preload="metadata" data-index="${i}" src="${audioSrc}"></audio><span class="small muted" id="heard${i}">${get().heard?.[`${day}-${step}-${i}`] ? '✓ Tinglangan' : 'Oxirigacha tinglang'}</span>` : `<p class="notice">Bu dars uchun audio fayl hozircha yuklanmagan. Matnni o‘rganib, quyidagi tugma orqali bosqichni yakunlashingiz mumkin.</p>`}</div>`;
+  };
   window.lesson = function(){
     const x=LESSONS[day-1]; if(!x){go('challenge');return;}
     const names=['So‘zlar','Iboralar','Jonli dialoglar','Grammatika'];
