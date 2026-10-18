@@ -61,8 +61,8 @@
       case 'books': books(); break;
       case 'help': help(); break;
       case 'certificate': certificate(); break;
-      case 'admin': admin(); break;
-      default: if(adminMode()) admin(); else (window.landing || landing)();
+      case 'admin': (typeof window.renderAdminStudio === 'function' ? window.renderAdminStudio : (window.admin || admin))(); break;
+      default: if(adminMode()) (typeof window.renderAdminStudio === 'function' ? window.renderAdminStudio : (window.admin || admin))(); else (window.landing || landing)();
     }
   };
 
