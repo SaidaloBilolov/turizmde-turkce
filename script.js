@@ -1,5 +1,4 @@
 const $=s=>document.querySelector(s), app=$('#app');const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-// Prefer persistent storage; fall back to sessionStorage if the browser's localStorage quota is full.
 function storageGet(k){try{const v=localStorage.getItem(k);if(v!==null)return v}catch(e){}try{return sessionStorage.getItem(k)}catch(e){return null}}
 function storageSet(k,v){try{localStorage.setItem(k,v);try{sessionStorage.removeItem(k)}catch(e){}return true}catch(e){try{localStorage.removeItem(k)}catch(e2){}try{sessionStorage.setItem(k,v);return true}catch(e3){return false}}}
 function storageRemove(k){try{localStorage.removeItem(k)}catch(e){}try{sessionStorage.removeItem(k)}catch(e){}}

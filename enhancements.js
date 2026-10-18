@@ -1,4 +1,3 @@
-/* TURİZMDE TÜRKÇE — UI & functionality enhancement layer v8 */
 (function(){
   const dayTitles = [
     'OTEL VE KONAKLAMA HİZMETLERİNDE TÜRKÇE',
@@ -94,6 +93,5 @@
   };
   window.saveAdminProgress=function(id){const d=getUserData(id);d.done=d.done||{};document.querySelectorAll('.admin-day-check input').forEach(cb=>{const n=+cb.dataset.day;for(let s=0;s<4;s++){if(cb.checked)d.done[`${n}-${s}`]=true;else delete d.done[`${n}-${s}`];}});if(putUserData(id,d)){alert('Natijalar saqlandi.');showUser(id)}else alert('Natijalarni saqlab bo‘lmadi.');};
   window.adminUserCertificate=function(id){const d=getUserData(id),p=d.profile||{};const done=LESSONS.every(l=>[0,1,2,3].every(s=>d.done?.[`${l.day}-${s}`]));if(!done){alert('Foydalanuvchi hali barcha 15 kunni yakunlamagan.');return}const w=window.open('','_blank');if(!w){alert('Yangi oynaga ruxsat bering.');return}const name=esc2([p.first,p.last].filter(Boolean).join(' '));w.document.write(`<html><head><base href="${location.href.replace(/[^/]*$/,'')}"><title>Sertifikat</title><style>@page{size:A4 landscape;margin:0}body{margin:0}img{width:100%;display:block}</style></head><body><div style="position:relative"><img src="assets/images/certificate.png"><div style="position:absolute;top:57%;left:0;width:100%;text-align:center;font:700 28px Georgia;color:#142d43">${name}</div></div><script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);w.document.close();};
-  // Re-render once this layer has replaced the base UI functions.
   try { if(typeof render==='function') render(); } catch(e) { console.error('UI enhancement render error',e); }
 })();

@@ -1,16 +1,9 @@
-/**
- * TURİZMDE TÜRKÇE — Supabase Data & Audio Uploader / Seeder
- * Ushbu skript data.js va audio fayllarni avtomatik ravishda Supabase-ga yuklaydi.
- */
-
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-// Seeding uchun SERVICE_ROLE_KEY tavsiya etiladi (RLS cheklovlarini aylanib o'tish uchun).
-// Agar u bo'lmasa, ANON_KEY ishlatiladi.
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes('your-project-id')) {
@@ -21,8 +14,6 @@ if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_URL.includes('your-project-id')) 
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// 1. data.js, accounts.js va videos.js ni o'qish
 const window = {};
 eval(fs.readFileSync(path.join(__dirname, '../data.js'), 'utf8'));
 eval(fs.readFileSync(path.join(__dirname, '../accounts.js'), 'utf8'));
@@ -39,8 +30,6 @@ const demoAdmins = window.DEMO_ADMINS || [];
 async function main() {
   console.log('🚀 Supabase-ga ma’lumotlarni yuklash boshlanmoqda...');
   console.log(`📡 Supabase URL: ${SUPABASE_URL}\n`);
-
-  // --- 1. STORAGE: 'audio' BUCKETNI TEKSHIRISH VA YARATISH ---
   console.log('📦 1. Supabase Storage: "audio" bucket tekshirilmoqda...');
   const { data: buckets, error: bError } = await supabase.storage.listBuckets();
   if (bError) {
@@ -55,8 +44,6 @@ async function main() {
       console.log('✅ "audio" bucketi mavjud.');
     }
   }
-
-  // --- 2. AUDIO FAYLLARNI SUPABASE STORAGE-GA YUKLASH ---
   console.log('\n🎧 2. Audio fayllarni Supabase Storage-ga yuklash...');
   const audioDir = path.join(__dirname, '../assets/audio');
   const uploadedAudios = {};
@@ -90,12 +77,8 @@ async function main() {
   } else {
     console.warn('⚠️ assets/audio papkasi topilmadi!');
   }
-
-  // --- 3. FOYDALANUVCHILAR VA ADMINLARNI BAZAGA KIRITISH ---
   console.log('\n👥 3. Foydalanuvchilar va Adminlarni bazaga kiritish...');
   const userRows = [];
-
-  // Talabalar
   for (const [id, pw] of demoAccounts) {
     userRows.push({
       id: String(id),
@@ -106,8 +89,6 @@ async function main() {
       level: 'A1'
     });
   }
-
-  // Adminlar
   for (const [id, pw] of demoAdmins) {
     userRows.push({
       id: String(id),
@@ -125,16 +106,12 @@ async function main() {
   } else {
     console.log(`✅ ${userRows.length} ta foydalanuvchi va admin bazaga muvaffaqiyatli kiritildi.`);
   }
-
-  // --- 4. DARSLAR, SO'ZLAR, IBORALAR, DIALOGLAR VA GRAMMATIKANI KIRITISH ---
   console.log('\n📚 4. Darslar, so‘zlar, iboralar, dialoglar va grammatikani kiritish...');
 
   for (const l of lessons) {
     const day = l.day;
     const vUrl = videoLinks[day - 1] || l.video || '';
     const dUrl = l.document || `assets/materials/day${day}.docx`;
-
-    // 4.1. Lesson
     const { error: lErr } = await supabase.from('lessons').upsert({
       day: day,
       title: l.title || `${day}-KUN`,
@@ -144,8 +121,6 @@ async function main() {
     }, { onConflict: 'day' });
 
     if (lErr) console.error(`❌ ${day}-kun darsini kiritishda xatolik:`, lErr.message);
-
-    // 4.2. Words (Kelimeler)
     if (Array.isArray(l.words) && l.words.length > 0) {
       await supabase.from('words').delete().eq('day', day);
       const wordAudioFile = `${day}.1.1.mp3`;
@@ -162,8 +137,6 @@ async function main() {
       const { error: wErr } = await supabase.from('words').insert(wordRows);
       if (wErr) console.error(`❌ ${day}-kun so‘zlarini kiritishda xato:`, wErr.message);
     }
-
-    // 4.3. Phrases (Hazır İfadeler)
     if (Array.isArray(l.phrases) && l.phrases.length > 0) {
       await supabase.from('phrases').delete().eq('day', day);
       const phraseAudioFile = `${day}.2.1.mp3`;
@@ -180,8 +153,6 @@ async function main() {
       const { error: pErr } = await supabase.from('phrases').insert(phraseRows);
       if (pErr) console.error(`❌ ${day}-kun iboralarini kiritishda xato:`, pErr.message);
     }
-
-    // 4.4. Dialogs (Diyaloglar)
     if (Array.isArray(l.dialogs) && l.dialogs.length > 0) {
       await supabase.from('dialogs').delete().eq('day', day);
 
@@ -200,8 +171,6 @@ async function main() {
       const { error: dErr } = await supabase.from('dialogs').insert(dialogRows);
       if (dErr) console.error(`❌ ${day}-kun dialoglarini kiritishda xato:`, dErr.message);
     }
-
-    // 4.5. Grammar (Gramer)
     if (Array.isArray(l.grammar) && l.grammar.length > 0) {
       await supabase.from('grammar').delete().eq('day', day);
       const { error: gErr } = await supabase.from('grammar').insert({

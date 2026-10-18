@@ -1,8 +1,3 @@
-/**
- * TURİZMDE TÜRKÇE — Server & Backend API
- * Node.js + Express + Supabase Integration + Multer Audio Uploader
- */
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -17,8 +12,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// 1. Supabase Client sozlamalari
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 let supabase = null;
@@ -37,11 +30,9 @@ if (isSupabaseConfigured()) {
 } else {
   console.log('ℹ️ Supabase .env sozlanmagan. Server mahalliy (fallback) rejimda ishlaydi.');
 }
-
-// 2. Multer — Audio va fayllarni yuklash uchun sozlamalar (xotira buferi)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB gacha audio
+  limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('audio/') || file.originalname.endsWith('.mp3') || file.originalname.endsWith('.wav')) {
       cb(null, true);
@@ -50,8 +41,6 @@ const upload = multer({
     }
   }
 });
-
-// Mahalliy fallback ma'lumotlar
 const getLocalData = () => {
   const win = {};
   try {
@@ -62,12 +51,6 @@ const getLocalData = () => {
     return { lessons: [], accounts: [], admins: [] };
   }
 };
-
-// ==============================================================================
-// API ENDPOINTS
-// ==============================================================================
-
-// Holatni tekshirish
 app.get('/api/status', (req, res) => {
   res.json({
     ok: true,
@@ -76,8 +59,6 @@ app.get('/api/status', (req, res) => {
     mode: isSupabaseConfigured() ? 'supabase' : 'local_fallback'
   });
 });
-
-// --- AUTHENTICATION ---
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { id, pw } = req.body;
@@ -108,8 +89,6 @@ app.post('/api/auth/login', async (req, res) => {
         });
       }
     }
-
-    // Fallback tekshiruv (local accounts.js)
     const { accounts, admins } = getLocalData();
     const isAdmin = admins.some(a => a[0] === id && a[1] === pw);
     if (isAdmin) {
@@ -132,8 +111,6 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// Profilni yangilash
 app.post('/api/profile', async (req, res) => {
   try {
     const { id, profile } = req.body;
@@ -156,8 +133,6 @@ app.post('/api/profile', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// --- DARSLAR (LESSONS) ---
 app.get('/api/lessons', async (req, res) => {
   try {
     if (supabase) {
@@ -170,8 +145,6 @@ app.get('/api/lessons', async (req, res) => {
         return res.json({ ok: true, lessons: data });
       }
     }
-
-    // Fallback
     const { lessons } = getLocalData();
     res.json({
       ok: true,
@@ -187,8 +160,6 @@ app.get('/api/lessons', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// Kunning to'liq ma'lumotlari (so'zlar, iboralar, dialoglar, grammatika)
 app.get('/api/lessons/:day', async (req, res) => {
   try {
     const day = parseInt(req.params.day);
@@ -225,8 +196,6 @@ app.get('/api/lessons/:day', async (req, res) => {
         });
       }
     }
-
-    // Fallback: local data.js
     const { lessons } = getLocalData();
     const l = lessons.find(x => x.day === day);
     if (!l) return res.status(404).json({ error: 'Dars topilmadi' });
@@ -236,8 +205,6 @@ app.get('/api/lessons/:day', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// --- PROGRESS (O'ZLASHTIRISH) ---
 app.get('/api/progress/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -292,12 +259,6 @@ app.post('/api/progress/step', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// ==============================================================================
-// ADMIN CMS ENDPOINTS (Yangi dars, audio, dialog, so'z qo'shish va boshqarish)
-// ==============================================================================
-
-// 1. Admin statistika ko'rinishi
 app.get('/api/admin/overview', async (req, res) => {
   try {
     let studentCount = 0;
@@ -313,8 +274,6 @@ app.get('/api/admin/overview', async (req, res) => {
 
       studentCount = uRes.count || 0;
       lessonsCount = lRes.count || 15;
-
-      // 60 ta bosqichni tugatganlarni sanash
       const userProgressCount = {};
       (pRes.data || []).forEach(p => {
         userProgressCount[p.user_id] = (userProgressCount[p.user_id] || 0) + 1;
@@ -338,8 +297,6 @@ app.get('/api/admin/overview', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 2. O'quvchilar ro'yxati va ularning progressi
 app.get('/api/admin/students', async (req, res) => {
   try {
     if (supabase) {
@@ -369,8 +326,6 @@ app.get('/api/admin/students', async (req, res) => {
 
       return res.json({ ok: true, students });
     }
-
-    // Fallback
     const { accounts } = getLocalData();
     res.json({
       ok: true,
@@ -387,8 +342,6 @@ app.get('/api/admin/students', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 3. Yangi o'quvchi qo'shish
 app.post('/api/admin/students', async (req, res) => {
   try {
     const { id, password, first_name, last_name, level } = req.body;
@@ -411,8 +364,6 @@ app.post('/api/admin/students', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 4. O'quvchini o'chirish
 app.delete('/api/admin/students/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -425,8 +376,6 @@ app.delete('/api/admin/students/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 5. AUDIO YUKLASH (Supabase Storage ga yuklaydi va to'g'ridan-to'g'ri havola beradi)
 app.post('/api/admin/upload-audio', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) {
@@ -442,7 +391,6 @@ app.post('/api/admin/upload-audio', upload.single('audio'), async (req, res) => 
     let audioUrl = '';
 
     if (supabase) {
-      // Supabase Storage-ga yuklash
       const { data, error } = await supabase.storage
         .from('audio')
         .upload(filename, req.file.buffer, {
@@ -457,14 +405,11 @@ app.post('/api/admin/upload-audio', upload.single('audio'), async (req, res) => 
       const { data: publicUrlData } = supabase.storage.from('audio').getPublicUrl(filename);
       audioUrl = publicUrlData.publicUrl;
     } else {
-      // Fallback: local assets/audio ga saqlash
       const localAudioDir = path.join(__dirname, 'assets/audio');
       if (!fs.existsSync(localAudioDir)) fs.mkdirSync(localAudioDir, { recursive: true });
       fs.writeFileSync(path.join(localAudioDir, filename), req.file.buffer);
       audioUrl = `assets/audio/${filename}`;
     }
-
-    // Agar ma'lum bir dars, dialog yoki so'zga bog'lash talab qilingan bo'lsa:
     if (supabase && targetId && type) {
       if (type === 'dialog') {
         await supabase.from('dialogs').update({ audio_url: audioUrl }).eq('id', targetId);
@@ -485,8 +430,6 @@ app.post('/api/admin/upload-audio', upload.single('audio'), async (req, res) => 
     res.status(500).json({ error: err.message });
   }
 });
-
-// 5.1 AUDIO O'CHIRISH (Supabase Storage va ma'lumotlar bazasidan)
 app.post('/api/admin/delete-audio', async (req, res) => {
   try {
     const { filename, day, type } = req.body;
@@ -506,8 +449,6 @@ app.post('/api/admin/delete-audio', async (req, res) => {
         }
       }
     }
-
-    // Local file fallback
     const localPath = path.join(__dirname, 'assets/audio', filename);
     if (fs.existsSync(localPath)) {
       try { fs.unlinkSync(localPath); } catch(e){}
@@ -518,8 +459,6 @@ app.post('/api/admin/delete-audio', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 6. Darsni yaratish yoki tahrirlash (Lesson Save)
 app.post('/api/admin/lessons', async (req, res) => {
   try {
     const { day, title, subtitle, video_url, document_url } = req.body;
@@ -542,8 +481,6 @@ app.post('/api/admin/lessons', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 7. Dialog qo'shish yoki tahrirlash
 app.post('/api/admin/dialogs', async (req, res) => {
   try {
     const { id, day, order_num, title, lines, audio_url } = req.body;
@@ -582,8 +519,6 @@ app.delete('/api/admin/dialogs/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 8. So'z qo'shish yoki tahrirlash
 app.post('/api/admin/words', async (req, res) => {
   try {
     const { id, day, order_num, turkish, uzbek, audio_url } = req.body;
@@ -622,8 +557,6 @@ app.delete('/api/admin/words/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 9. Iboralar qo'shish yoki tahrirlash
 app.post('/api/admin/phrases', async (req, res) => {
   try {
     const { id, day, order_num, turkish, uzbek, audio_url } = req.body;
@@ -662,8 +595,6 @@ app.delete('/api/admin/phrases/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 10. Grammatika saqlash
 app.post('/api/admin/grammar', async (req, res) => {
   try {
     const { day, content } = req.body;
@@ -684,21 +615,13 @@ app.post('/api/admin/grammar', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// ==============================================================================
-// STATIK FAYLLAR VA FRONTEND
-// ==============================================================================
 app.use(express.static(__dirname));
-
-// Barcha noma'lum so'rovlarni index.html ga yo'naltirish (SPA)
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'Endpoint topilmadi' });
   }
   res.sendFile(path.join(__dirname, 'index.html'));
 });
-
-// Serverni ishga tushirish
 app.listen(PORT, () => {
   console.log(`\n======================================================`);
   console.log(`🚀 TURİZMDE TÜRKÇE serveri ishga tushdi!`);

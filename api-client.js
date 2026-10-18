@@ -1,9 +1,3 @@
-/**
- * TURİZMDE TÜRKÇE — Frontend API & Cloud Client
- * Supabase bulutli bazasi (Database + Storage) bilan to'g'ridan-to'g'ri 24/7 ishlaydi.
- * Kompyuter yopiq bo'lsa ham yoki server o'chirilgan bo'lsa ham Supabase orqali ma'lumotlar saqlanadi.
- */
-
 window.API = (function() {
   const SUPABASE_URL = "https://webwkarawfskrzyyuloz.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_OyrmVL_dfWiLhBNExLgMQw_SIA9Itju";
@@ -78,8 +72,6 @@ window.API = (function() {
       }
     } catch (e) {}
   }
-
-  // Tizim holatini tekshirish
   async function checkStatus() {
     const client = getSupabase();
     if (client) {
@@ -97,22 +89,17 @@ window.API = (function() {
         }
       } catch (e) {}
     }
-
-    // Backend fallback
     try {
       const res = await fetch(`${BASE_URL}/api/status`);
       const data = await res.json();
       return data;
     } catch (e) {
-      // Agar supabase kodi yuklangan bo'lsa ham true beramiz
       if (getSupabase()) {
         return { ok: true, supabase: true, mode: 'cloud_supabase', url: SUPABASE_URL };
       }
       return { ok: false, supabase: false, mode: 'local_fallback' };
     }
   }
-
-  // Kirish tekshirish (Supabase orqali)
   async function login(id, pw) {
     const client = getSupabase();
     if (client) {
@@ -141,8 +128,6 @@ window.API = (function() {
         }
       } catch (e) {}
     }
-
-    // Backend fallback
     try {
       const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
@@ -154,8 +139,6 @@ window.API = (function() {
       return { ok: false, error: err.message };
     }
   }
-
-  // Audio yuklash (To'g'ridan-to'g'ri Supabase Storage)
   async function uploadAudio(formData) {
     const file = formData.get('audio');
     const day = formData.get('day');
@@ -170,7 +153,6 @@ window.API = (function() {
     const client = getSupabase();
     if (client) {
       try {
-        // 1. Supabase Storage "audio" bucketiga to'g'ridan-to'g'ri yuklash
         const { data: uploadData, error: uploadErr } = await client.storage
           .from('audio')
           .upload(filename, file, {
@@ -182,12 +164,8 @@ window.API = (function() {
           console.error('Storage upload error:', uploadErr);
           return { ok: false, error: uploadErr.message };
         }
-
-        // 2. Ommaviy havola (Public URL) olish
         const { data: urlData } = client.storage.from('audio').getPublicUrl(filename);
         const audioUrl = urlData.publicUrl;
-
-        // 3. Database yozuvlarini yangilash
         try {
           if (type === 'word') {
             await client.from('words').update({ audio_url: audioUrl }).eq('day', parseInt(day));
@@ -215,8 +193,6 @@ window.API = (function() {
         return { ok: false, error: err.message };
       }
     }
-
-    // Backend fallback
     try {
       const res = await fetch(`${BASE_URL}/api/admin/upload-audio`, {
         method: 'POST',
@@ -227,8 +203,6 @@ window.API = (function() {
       return { ok: false, error: err.message };
     }
   }
-
-  // Audio o'chirish (Supabase Storage + Database)
   async function deleteAudio(filename, day, type) {
     if (!filename) return { ok: false, error: 'Fayl nomi ko‘rsatilmadi' };
     if (!filename.endsWith('.mp3')) filename += '.mp3';
@@ -267,8 +241,6 @@ window.API = (function() {
 
     return { ok: true, message: 'Audio muvaffaqiyatli o‘chirildi!' };
   }
-
-  // So'z saqlash (Supabase database)
   async function saveWord(data) {
     const client = getSupabase();
     if (client) {
@@ -285,8 +257,6 @@ window.API = (function() {
     }
     return { ok: true, local: true };
   }
-
-  // So'z o'chirish
   async function deleteWord(day, order_num) {
     const client = getSupabase();
     if (client) {
@@ -296,8 +266,6 @@ window.API = (function() {
     }
     return { ok: true };
   }
-
-  // Ibora saqlash (Supabase database)
   async function savePhrase(data) {
     const client = getSupabase();
     if (client) {
@@ -314,8 +282,6 @@ window.API = (function() {
     }
     return { ok: true, local: true };
   }
-
-  // Ibora o'chirish
   async function deletePhrase(day, order_num) {
     const client = getSupabase();
     if (client) {
@@ -325,8 +291,6 @@ window.API = (function() {
     }
     return { ok: true };
   }
-
-  // Dialog saqlash (Supabase database)
   async function saveDialog(data) {
     const client = getSupabase();
     if (client) {
@@ -343,8 +307,6 @@ window.API = (function() {
     }
     return { ok: true, local: true };
   }
-
-  // Dialog o'chirish
   async function deleteDialog(day, order_num) {
     const client = getSupabase();
     if (client) {
@@ -354,8 +316,6 @@ window.API = (function() {
     }
     return { ok: true };
   }
-
-  // Dars parametrlarini saqlash (Supabase database)
   async function saveLesson(data) {
     const client = getSupabase();
     if (client) {
@@ -371,8 +331,6 @@ window.API = (function() {
     }
     return { ok: true, local: true };
   }
-
-  // Grammatika saqlash (Supabase database)
   async function saveGrammar(data) {
     const client = getSupabase();
     if (client) {
@@ -386,8 +344,6 @@ window.API = (function() {
     }
     return { ok: true, local: true };
   }
-
-  // Yangi o'quvchi qo'shish (Supabase database)
   async function addStudent(data) {
     const client = getSupabase();
     if (client) {
@@ -403,8 +359,6 @@ window.API = (function() {
     }
     return { ok: true, local: true };
   }
-
-  // Admin hisoboti
   async function getAdminOverview() {
     const client = getSupabase();
     if (client) {
@@ -428,8 +382,6 @@ window.API = (function() {
       stats: { totalStudents: 42, totalLessons: 15, completedCertificates: 0 }
     };
   }
-
-  // Profil saqlash
   async function saveProfile(id, profile) {
     const client = getSupabase();
     if (client) {
@@ -444,8 +396,6 @@ window.API = (function() {
     }
     return { ok: true };
   }
-
-  // Progress saqlash
   async function completeStep(userId, day, step) {
     const client = getSupabase();
     if (client) {

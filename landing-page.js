@@ -1,8 +1,3 @@
-/**
- * TURİZMDE TÜRKÇE — Zamonaviy, boy va to‘liq skrollanadigan Bosh sahifa (Landing Page)
- * Premium tipografika, 15 kunlik dastur xaritasi, kutubxona, sertifikat va aloqa bo'limlari.
- */
-
 (function() {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -30,7 +25,6 @@
 
     app.innerHTML = `
       <div class="landing-page-wrap">
-        <!-- 1. STICKY MODERN HEADER -->
         <header class="landing-header">
           <div class="landing-container header-inner">
             <a href="#hero" class="brand-link">
@@ -60,8 +54,6 @@
             </div>
           </div>
         </header>
-
-        <!-- 2. HERO SECTION -->
         <section class="hero-landing" id="hero">
           <div class="hero-glow-1"></div>
           <div class="hero-glow-2"></div>
@@ -93,8 +85,6 @@
                   Dastur xaritasi ↓
                 </a>
               </div>
-
-              <!-- Quick stats -->
               <div class="hero-stats-row">
                 <div class="stat-pill">
                   <b>15</b>
@@ -121,8 +111,6 @@
             <div class="hero-visual-block">
               <div class="visual-card-wrap">
                 <img src="assets/images/logo 1- 1000x1000.png" alt="Platforma Gerbi" class="hero-main-emblem">
-                
-                <!-- Floating badges -->
                 <div class="floating-pill float-top-right">
                   <span class="float-icon">🎧</span>
                   <div>
@@ -150,8 +138,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 3. PLATFORMA AFZALLIKLARI (FEATURES) -->
         <section class="section-landing bg-surface" id="features">
           <div class="landing-container">
             <div class="section-header-center">
@@ -193,8 +179,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 4. 15 KUNLIK DASTUR XARITASI (CURRICULUM) -->
         <section class="section-landing" id="curriculum">
           <div class="landing-container">
             <div class="section-header-center">
@@ -224,8 +208,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 5. KUTUBXONA (LIBRARY) -->
         <section class="section-landing bg-surface" id="library">
           <div class="landing-container">
             <div class="section-header-center">
@@ -291,8 +273,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 6. SERTIFIKAT BO'LIMI (CERTIFICATE PREVIEW) -->
         <section class="section-landing" id="certificate">
           <div class="landing-container">
             <div class="certificate-banner-grid">
@@ -327,8 +307,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 7. TEZ-TEZ SO'RALADIGAN SAVOLLAR (FAQ) -->
         <section class="section-landing bg-surface" id="faq">
           <div class="landing-container faq-container">
             <div class="section-header-center">
@@ -372,8 +350,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 8. BIZ BILAN BOG'LANISH VA MUROJAAT (CONTACT) -->
         <section class="section-landing" id="contact">
           <div class="landing-container">
             <div class="section-header-center">
@@ -383,7 +359,6 @@
             </div>
 
             <div class="contact-card-grid">
-              <!-- Chap tomon: Aloqa ma'lumotlari -->
               <div class="contact-info-panel">
                 <div class="info-item-row">
                   <div class="info-icon-badge">✈️</div>
@@ -426,8 +401,6 @@
                   </a>
                 </div>
               </div>
-
-              <!-- O'ng tomon: Murojaat formasi -->
               <div class="contact-form-panel">
                 <h3>Xabar qoldiring</h3>
                 <p class="muted">Ismingiz, emailingiz va xabaringizni yozing, tez orada siz bilan bog‘lanamiz.</p>
@@ -462,8 +435,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 9. FOOTER (PASTKI QISM) -->
         <footer class="landing-footer">
           <div class="landing-container footer-content-grid">
             <div class="footer-about-col">
@@ -508,8 +479,6 @@
             <span>O‘zbekiston × Türkiye hamkorligi</span>
           </div>
         </footer>
-
-        <!-- RO'YXATDAN O'TISH MODALI (REGISTER POPUP) -->
         <div id="register-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeRegisterModal()">
           <div class="modal-card">
             <button type="button" class="modal-close-btn" onclick="closeRegisterModal()">✕</button>
@@ -556,8 +525,6 @@
       </div>
     `;
   };
-
-  // Modal funksiyalari
   window.openRegisterModal = function() {
     const modal = document.querySelector('#register-modal');
     if (modal) modal.style.display = 'flex';
@@ -567,8 +534,6 @@
     const modal = document.querySelector('#register-modal');
     if (modal) modal.style.display = 'none';
   };
-
-  // Aloqa formasi (Email orqali to'g'ridan-to'g'ri yuborish - FormSubmit AJAX)
   window.handleLandingContact = async function(e) {
     e.preventDefault();
     const form = e.target;
@@ -643,8 +608,6 @@
       }, 4000);
     }
   };
-
-  // Ro'yxatdan o'tish so'rovi (Email orqali to'g'ridan-to'g'ri yuborish)
   window.handleRegisterRequest = async function(e) {
     e.preventDefault();
     const form = e.target;
@@ -691,8 +654,6 @@
       }
     }
   };
-
-  // Agar hozirda bosh sahifa (landing) ko'rinishida bo'lsa, darhol yangilash
   try {
     if (typeof view !== 'undefined' && view === 'landing') {
       window.landing();

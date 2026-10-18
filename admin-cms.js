@@ -1,18 +1,9 @@
-/**
- * TURİZMDE TÜRKÇE — ADMIN CMS & CONTENT STUDIO
- * Audio yuklash, yangi dialoglar, so'zlar, iboralar, kitoblar, videolar va grammatikani boshqarish.
- */
-
 (function() {
-  let currentTab = 'overview'; // 'overview', 'audio', 'dialogs', 'words', 'lessons', 'books'
+  let currentTab = 'overview';
   let selectedDay = 1;
   let adminStats = { totalStudents: 42, completedCertificates: 0, totalLessons: 15 };
   let systemStatus = { supabase: true, mode: 'cloud_supabase' };
-
-  // HTML belgilardan tozalash
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-  // Tizim holatini tekshirish
   async function loadStatus() {
     try {
       if (window.API && typeof API.checkStatus === 'function') {
@@ -35,8 +26,6 @@
       }
     } catch (e) {}
   }
-
-  // Asosiy Admin Studio oynasini chizish
   window.renderAdminStudio = renderAdminStudio;
   window.admin = function() {
     renderAdminStudio();
@@ -108,12 +97,8 @@
         ${contentHtml}
       </div>
     `);
-
-    // Tablarga tegishli eventlarni ulash
     bindTabEvents();
   }
-
-  // --- 1. OVERVIEW & O'QUVCHILAR TABI ---
   function renderOverviewTab() {
     let accounts = [];
     try {
@@ -180,8 +165,6 @@
       }
     } catch(e) {}
   }
-
-  // --- 2. AUDIO YUKLASH TABI ---
   function renderAudioCard(filename, title, typeCode) {
     const uploaded = (typeof window.getUploadedAudios === 'function') ? window.getUploadedAudios() : {};
     let deletedDefaults = [];
@@ -307,8 +290,6 @@
       </div>
     `;
   }
-
-  // --- 3. SO'Z VA IBORALAR (SLOVAR) TABI ---
   function renderWordsTab() {
     const lesson = (window.LESSONS || [])[selectedDay - 1] || {};
     const words = lesson.words || [];
@@ -393,8 +374,6 @@
       </div>
     `;
   }
-
-  // --- 4. DIALOGLAR TAHRIRI TABI ---
   function renderDialogsTab() {
     const lesson = (window.LESSONS || [])[selectedDay - 1] || {};
     const dialogs = lesson.dialogs || [];
@@ -440,8 +419,6 @@
       </div>
     `;
   }
-
-  // --- 5. DARSLAR, GRAMMATIKA VA VIDEO TABI ---
   function renderLessonsTab() {
     const lesson = (window.LESSONS || [])[selectedDay - 1] || {};
     const grammarLines = lesson.grammar || [];
@@ -478,8 +455,6 @@
       </div>
     `;
   }
-
-  // --- 6. QO'LLANMALAR VA KITOBLAR (PDF) TABI ---
   function renderBooksTab() {
     let books = [];
     try {
@@ -520,8 +495,6 @@
       </div>
     `;
   }
-
-  // Eventlarni ulash
   function bindTabEvents() {
     const uploadForm = document.querySelector('#audio-upload-form');
     if (uploadForm) {
@@ -584,8 +557,6 @@
       };
     }
   }
-
-  // Audio maxsus nom inputini ko'rsatish/yashirish
   window.updateAudioCustomName = function() {
     const typeVal = document.querySelector('#upload-type')?.value;
     const box = document.querySelector('#custom-name-box');
@@ -596,8 +567,6 @@
     selectedDay = parseInt(document.querySelector('#upload-day')?.value) || 1;
     renderAdminStudio();
   };
-
-  // Tezkor audio yuklash va almashtirish (Kartaning o'zidan to'g'ridan-to'g'ri)
   window.quickUploadAudio = function(filename, type, day) {
     const input = document.createElement('input');
     input.type = 'file';
@@ -633,8 +602,6 @@
     };
     input.click();
   };
-
-  // Audio o'chirish (Storage + Database + Local)
   window.handleDeleteAudio = async function(filename, day, type) {
     if (!confirm(`Haqiqatan ham "${filename}" audio faylini o‘chirmoqchimisiz?`)) return;
     try {
@@ -651,8 +618,6 @@
       alert('O‘chirishda xatolik: ' + e.message);
     }
   };
-
-  // Dialog saqlash (Sarlavha va replikalarni to'liq saqlash)
   window.saveDialogChanges = async function(day, idx) {
     const title = document.querySelector(`#dialog-title-${idx}`)?.value?.trim() || '';
     const linesText = document.querySelector(`#dialog-lines-${idx}`)?.value || '';
@@ -675,8 +640,6 @@
       renderAdminStudio();
     }
   };
-
-  // Dialog o'chirish
   window.deleteDialogItem = async function(day, idx) {
     if (!confirm('Haqiqatan ham bu dialogni o‘chirmoqchimisiz?')) return;
     const lesson = (window.LESSONS || [])[day - 1];
@@ -689,8 +652,6 @@
       renderAdminStudio();
     }
   };
-
-  // Yangi dialog qo'shish modal
   window.openAddDialogModal = async function(day) {
     const title = prompt('Yangi dialog mavzusi (sarlavhasi)ni kiriting:');
     if (!title) return;
@@ -716,8 +677,6 @@
       renderAdminStudio();
     }
   };
-
-  // So'z qo'shish
   window.handleAddWord = async function(e, day) {
     e.preventDefault();
     const f = new FormData(e.target);
@@ -735,8 +694,6 @@
       renderAdminStudio();
     }
   };
-
-  // So'z tahrirlash (Türkçe va O'zbekcha)
   window.editWordItem = async function(day, idx) {
     const lesson = (window.LESSONS || [])[day - 1];
     if (!lesson || !lesson.words || !lesson.words[idx]) return;
@@ -753,8 +710,6 @@
     }
     renderAdminStudio();
   };
-
-  // So'z o'chirish
   window.removeWord = async function(day, idx) {
     if (!confirm('Ushbu so‘zni o‘chirmoqchimisiz?')) return;
     const lesson = (window.LESSONS || [])[day - 1];
@@ -768,8 +723,6 @@
       renderAdminStudio();
     }
   };
-
-  // Ibora qo'shish
   window.handleAddPhrase = async function(e, day) {
     e.preventDefault();
     const f = new FormData(e.target);
@@ -787,8 +740,6 @@
       renderAdminStudio();
     }
   };
-
-  // Ibora tahrirlash (Türkçe va O'zbekcha)
   window.editPhraseItem = async function(day, idx) {
     const lesson = (window.LESSONS || [])[day - 1];
     if (!lesson || !lesson.phrases || !lesson.phrases[idx]) return;
@@ -805,8 +756,6 @@
     }
     renderAdminStudio();
   };
-
-  // Ibora o'chirish
   window.removePhrase = async function(day, idx) {
     if (!confirm('Ushbu iborani o‘chirmoqchimisiz?')) return;
     const lesson = (window.LESSONS || [])[day - 1];
@@ -820,8 +769,6 @@
       renderAdminStudio();
     }
   };
-
-  // Dars sozlamalarini saqlash
   window.handleSaveLesson = async function(e, day) {
     e.preventDefault();
     const f = new FormData(e.target);
@@ -848,8 +795,6 @@
       alert('Dars, matn va video havola muvaffaqiyatli saqlandi! ✓');
     }
   };
-
-  // Yangi kitob qo'shish modal
   window.openAddBookModal = function() {
     const title = prompt('Kitob sarlavhasi (masalan: Yangi Turizm Qo‘llanmasi):');
     if (!title) return;
@@ -874,8 +819,6 @@
     alert(`"${title}" kitobi qo‘shildi!`);
     renderAdminStudio();
   };
-
-  // Kitobni tahrirlash
   window.editBookItem = function(idx) {
     let books = [];
     try {
@@ -906,8 +849,6 @@
     alert('Kitob ma’lumotlari muvaffaqiyatli yangilandi! ✓');
     renderAdminStudio();
   };
-
-  // Kitobni o'chirish
   window.deleteBookItem = function(idx) {
     if (!confirm('Ushbu kitobni o‘chirmoqchimisiz?')) return;
     let books = [];
@@ -926,8 +867,6 @@
     try { localStorage.setItem('tt_books_override', JSON.stringify(books)); } catch(e){}
     renderAdminStudio();
   };
-
-  // Yangi o'quvchi qo'shish modal
   window.openAddStudentModal = function() {
     const id = prompt('Yangi o‘quvchi logini (masalan: 8 xonali son yoki ism):');
     if (!id) return;
@@ -955,8 +894,6 @@
       el.hidden = !text.includes(q);
     });
   };
-
-  // Agar foydalanuvchi admin bo'lsa darhol yangi Admin CMS ochilsin
   try {
     if (typeof user !== 'undefined' && String(user || '').startsWith('admin:') && typeof view !== 'undefined' && view === 'admin') {
       window.admin();
