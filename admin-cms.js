@@ -27,9 +27,14 @@
   }
 
   // Asosiy Admin Studio oynasini chizish
-  window.admin = async function() {
-    await loadStatus();
+  window.renderAdminStudio = renderAdminStudio;
+  window.admin = function() {
     renderAdminStudio();
+    loadStatus().then(() => {
+      if (typeof view !== 'undefined' && view === 'admin') {
+        renderAdminStudio();
+      }
+    });
   };
 
   function setAdminTab(tab) {
@@ -617,8 +622,10 @@
   window.filterStudentsList = function() {
     const q = (document.querySelector('#admin-search-input')?.value || '').toLowerCase();
     document.querySelectorAll('.student-row').forEach(el => {
-      el.hidden = !el.dataset.search.includes(q);
-    });
-  };
-
+  // Agar foydalanuvchi admin bo'lsa darhol yangi Admin CMS ochilsin
+  try {
+    if (typeof user !== 'undefined' && String(user || '').startsWith('admin:') && typeof view !== 'undefined' && view === 'admin') {
+      window.admin();
+    }
+  } catch(e) {}
 })();
