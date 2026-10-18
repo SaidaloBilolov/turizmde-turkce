@@ -568,30 +568,117 @@
     if (modal) modal.style.display = 'none';
   };
 
-  // Aloqa formasi (Email orqali yuborish)
-  window.handleLandingContact = function(e) {
+  // Aloqa formasi (Email orqali to'g'ridan-to'g'ri yuborish - FormSubmit AJAX)
+  window.handleLandingContact = async function(e) {
     e.preventDefault();
-    const f = new FormData(e.target);
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const f = new FormData(form);
     const name = f.get('fullname') || '';
     const sender = f.get('sender') || '';
     const subject = f.get('subject') || 'Platforma murojaati';
     const message = f.get('message') || '';
 
-    const mailto = `mailto:fzz2000fzz@gmail.com?subject=${encodeURIComponent('TURİZMDE TÜRKÇE | ' + subject)}&body=${encodeURIComponent('Ism: ' + name + '\nEmail: ' + sender + '\n\n' + message)}`;
-    window.location.href = mailto;
+    const origText = btn ? btn.innerHTML : '✉ Xabarni yuborish →';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'Yuborilmoqda... ⏳';
+    }
+
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/fzz2000fzz@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          'Ism va familiya': name,
+          'Email manzili': sender,
+          '_subject': 'TURİZMDE TÜRKÇE | Yangi murojaat: ' + subject,
+          'Mavzu': subject,
+          'Xabar matni': message,
+          '_template': 'table'
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok || data.success === 'true' || data.success === true) {
+        if (btn) {
+          btn.innerHTML = '✅ Xabar yuborildi!';
+          btn.style.background = '#10b981';
+        }
+        alert('Rahmat! Xabaringiz to‘g‘ridan-to‘g‘ri fzz2000fzz@gmail.com pochtasiga yuborildi. Tez orada siz bilan bog‘lanamiz.');
+        form.reset();
+      } else {
+        throw new Error(data.message || 'Xatolik yuz berdi');
+      }
+    } catch (err) {
+      console.warn('FormSubmit fallback:', err);
+      const mailto = `mailto:fzz2000fzz@gmail.com?subject=${encodeURIComponent('TURİZMDE TÜRKÇE | ' + subject)}&body=${encodeURIComponent('Ism: ' + name + '\nEmail: ' + sender + '\n\n' + message)}`;
+      window.location.href = mailto;
+    } finally {
+      setTimeout(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+          btn.style.background = '';
+        }
+      }, 4000);
+    }
   };
 
-  // Ro'yxatdan o'tish so'rovi
-  window.handleRegisterRequest = function(e) {
+  // Ro'yxatdan o'tish so'rovi (Email orqali to'g'ridan-to'g'ri yuborish)
+  window.handleRegisterRequest = async function(e) {
     e.preventDefault();
-    const f = new FormData(e.target);
+    const form = e.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const f = new FormData(form);
     const name = f.get('name') || '';
     const contact = f.get('contact') || '';
-    const level = f.get('level') || '';
+    const level = f.get('level') || 'A1';
 
-    const mailto = `mailto:fzz2000fzz@gmail.com?subject=${encodeURIComponent('Yangi o‘quvchi ro‘yxatdan o‘tish so‘rovi')}&body=${encodeURIComponent('Ism: ' + name + '\nAloqa: ' + contact + '\nDaraja: ' + level + '\n\nIltimos, menga platformaga kirish uchun 8 xonali login va parol taqdim eting.')}`;
-    window.location.href = mailto;
-    closeRegisterModal();
+    const origText = btn ? btn.innerHTML : 'Ariza yuborish →';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'Yuborilmoqda... ⏳';
+    }
+
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/fzz2000fzz@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          'Yangi o‘quvchi': name,
+          'Aloqa (Telegram/Telefon/Email)': contact,
+          'Turk tili darajasi': level,
+          '_subject': 'TURİZMDE TÜRKÇE: Yangi o‘quvchi ro‘yxatdan o‘tish arizasi',
+          'Iltimos': 'Platformaga kirish uchun 8 xonali login va parol taqdim etilsin.',
+          '_template': 'table'
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok || data.success === 'true' || data.success === true) {
+        alert('Arizangiz muvaffaqiyatli qabul qilindi! Adminlar tez orada siz bilan bog‘lanadi.');
+        form.reset();
+        closeRegisterModal();
+      } else {
+        throw new Error(data.message || 'Xatolik');
+      }
+    } catch (err) {
+      const mailto = `mailto:fzz2000fzz@gmail.com?subject=${encodeURIComponent('Yangi o‘quvchi ro‘yxatdan o‘tish so‘rovi')}&body=${encodeURIComponent('Ism: ' + name + '\nAloqa: ' + contact + '\nDaraja: ' + level + '\n\nIltimos, menga platformaga kirish uchun 8 xonali login va parol taqdim eting.')}`;
+      window.location.href = mailto;
+      closeRegisterModal();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
   };
 
   // Agar hozirda bosh sahifa (landing) ko'rinishida bo'lsa, darhol yangilash
