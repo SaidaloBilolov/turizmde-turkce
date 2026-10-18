@@ -7,7 +7,7 @@
   let currentTab = 'overview'; // 'overview', 'audio', 'dialogs', 'words', 'lessons', 'books'
   let selectedDay = 1;
   let adminStats = { totalStudents: 42, completedCertificates: 0, totalLessons: 15 };
-  let systemStatus = { supabase: false, mode: 'local_fallback' };
+  let systemStatus = { supabase: true, mode: 'cloud_supabase' };
 
   // HTML belgilardan tozalash
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -17,11 +17,21 @@
     try {
       if (window.API && typeof API.checkStatus === 'function') {
         const res = await API.checkStatus();
-        if (res && res.ok) systemStatus = res;
+        if (res && res.ok) {
+          systemStatus = res;
+          if (typeof renderAdminStudio === 'function' && typeof view !== 'undefined' && view === 'admin') {
+            renderAdminStudio();
+          }
+        }
       }
       if (window.API && typeof API.getAdminOverview === 'function') {
         const st = await API.getAdminOverview();
-        if (st && st.ok) adminStats = st.stats;
+        if (st && st.ok) {
+          adminStats = st.stats;
+          if (typeof renderAdminStudio === 'function' && typeof view !== 'undefined' && view === 'admin') {
+            renderAdminStudio();
+          }
+        }
       }
     } catch (e) {}
   }
@@ -30,11 +40,7 @@
   window.renderAdminStudio = renderAdminStudio;
   window.admin = function() {
     renderAdminStudio();
-    loadStatus().then(() => {
-      if (typeof view !== 'undefined' && view === 'admin') {
-        renderAdminStudio();
-      }
-    });
+    loadStatus();
   };
 
   function setAdminTab(tab) {
@@ -61,8 +67,8 @@
 
     const isConnected = systemStatus.supabase;
     const statusBadge = isConnected
-      ? `<span class="pill" style="background:#10b981;color:#fff">🟢 Supabase ulangan</span>`
-      : `<span class="pill" style="background:#f59e0b;color:#fff">🟡 Mahalliy rejim (Offline)</span>`;
+      ? `<span class="pill" style="background:#10b981;color:#fff;font-weight:700">🟢 Supabase buluti ulangan (Online 24/7)</span>`
+      : `<span class="pill" style="background:#f59e0b;color:#fff;font-weight:700">🟡 Mahalliy rejim (Offline)</span>`;
 
     let contentHtml = '';
     switch (currentTab) {
