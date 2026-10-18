@@ -84,7 +84,6 @@
         </div>
       </section>
 
-      <!-- CMS TABLARI -->
       <div class="admin-tabs" style="display:flex;gap:8px;margin:20px 0;border-bottom:2px solid #e2e8f0;padding-bottom:10px;overflow-x:auto">
         ${tabs.map(([t, label]) => `
           <button type="button" class="btn-soft ${currentTab === t ? 'btn-primary' : ''}" style="${currentTab === t ? 'background:#087f8c;color:#fff;font-weight:bold' : ''}" onclick="setAdminTab('${t}')">
@@ -308,7 +307,6 @@
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="vocab-grid">
-        <!-- SO'ZLAR -->
         <div class="card" style="background:#fff">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <h3>📖 So‘zlar lug‘ati (${words.length} ta)</h3>
@@ -340,7 +338,6 @@
           </div>
         </div>
 
-        <!-- IBORALAR -->
         <div class="card" style="background:#fff">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <h3>💬 Tayyor iboralar (${phrases.length} ta)</h3>
